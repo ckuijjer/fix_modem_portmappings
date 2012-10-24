@@ -1,12 +1,15 @@
 #!/usr/bin/python
 
 import socket
+import mechanize
 
 modem_ip = '192.168.1.1'
 
-add_format = 'http://%(modem_ip)s/scvrtsrv.cmd?action=add&srvName=%(server_ip)s&srvAddr=%(server_ip)s&proto=1,&eStart=%(port)s,&eEnd=%(port)s,&iStart=%(port)s,&iEnd=%(port)s'
+modem_url = 'http://%(modem_ip)s/scvrtsrv.cmd?action=a'
 
-remove_format = 'http://%(modem_ip)s/scvrtsrv.cmd?action=remove&rmLst=%(server_ip_int)s|%(port)s|%(port)s|1|0|0|%(port)s|%(port)s,'
+view_url = modem_url + '=view'
+add_url = modem_url + '=add&srvName=%(server_ip)s&srvAddr=%(server_ip)s&proto=1,&eStart=%(port)s,&eEnd=%(port)s,&iStart=%(port)s,&iEnd=%(port)s'
+remove_url = modem_url + '=remove&rmLst=%(server_ip_int)s|%(port)s|%(port)s|1|0|0|%(port)s|%(port)s,'
 
 def get_ipaddress():
     return socket.gethostbyname(socket.gethostname())
@@ -30,4 +33,9 @@ if __name__ == '__main__':
     print get_ipaddress()
 
     print values
-    print add_format % values
+    print add_url % values
+
+    br = mechanize.Browser()
+    br.add_password(modem_url % values, 'user', 'user')
+    br.open(view_url % values)
+    print br.response().read()

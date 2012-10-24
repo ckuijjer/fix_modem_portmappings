@@ -1,1 +1,8 @@
+# Introduction
+
 A small, personal utility to update the portmappings configured on a Tele2 fiberspeed modem (Comtrend CT-6373). Needed as the DHCP server on the modem won't keep the ip address of my server fixed.
+
+# Dependencies
+
+* BeautifulSoup
+* mechanize
