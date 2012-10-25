@@ -5,7 +5,6 @@ import collections
 import mechanize
 import BeautifulSoup
 
-
 PortMapping = collections.namedtuple('PortMapping', 'name ip port')
 
 class PortMappingHandler():
@@ -17,9 +16,9 @@ class PortMappingHandler():
         }
 
         self.base_url = 'http://%s/scvrtsrv.cmd?action=' % options['modem_ip']
-        self.view_url = self.base_url + '=view'
-        self.append_url = self.base_url + '=add&srvName=%(name)s&srvAddr=%(ip)s&proto=1,&eStart=%(port)s,&eEnd=%(port)s,&iStart=%(port)s,&iEnd=%(port)s'
-        self.remove_url = self.base_url + '=remove&rmLst=%(ip_int)s|%(port)s|%(port)s|1|0|0|%(port)s|%(port)s,'
+        self.view_url = self.base_url + 'view'
+        self.append_url = self.base_url + 'add&srvName=%(name)s&srvAddr=%(ip)s&proto=1,&eStart=%(port)s,&eEnd=%(port)s,&iStart=%(port)s,&iEnd=%(port)s,'
+        self.remove_url = self.base_url + 'remove&rmLst=%(ip_int)s|%(port)s|%(port)s|1|0|0|%(port)s|%(port)s,'
 
         self.browser = mechanize.Browser()
         self.browser.add_password(self.base_url, options['username'], options['password'])
@@ -36,26 +35,26 @@ class PortMappingHandler():
             mappings.append(PortMapping(
                     name = cells[0].string, 
                     ip = cells[6].string,
-                    port = cells[1].string))
+                    port = int(cells[1].string)))
 
         return mappings
 
     def append(self, mapping):
-        print 'adding %s %s %s' % mapping
-        return
-        self.browser.open(self.append_url % {
-                'name': mapping.name,
-                'ip': mapping.ip,
-                'port': mapping.port,
-            })
+        url = self.append_url % {
+            'name': mapping.name,
+            'ip': mapping.ip,
+            'port': mapping.port,
+        }
+        self.browser.open(url)
+        print url
 
     def remove(self, mapping):
-        print 'removing %s %s %s' % mapping
-        return
-        self.browser.open(self.remove_url % {
-                'ip_int': ip_to_int(mapping.ip),
-                'port': mapping.port,
-            })
+        url = self.remove_url % {
+            'ip_int': self.ip_to_int(mapping.ip),
+            'port': mapping.port,
+        }
+        self.browser.open(url)
+        print url
 
     def ip_to_int(self, ipaddress):
         return int(socket.inet_pton(socket.AF_INET, ipaddress).encode('hex'), 16)
@@ -80,7 +79,7 @@ def main():
     to_add = []
 
     for wanted in wanted_mappings:
-        wanted_found = False
+        found = False
 
         for existing in existing_mappings:
             if wanted.port == existing.port:
@@ -90,7 +89,7 @@ def main():
                 to_remove.append(existing)
                 to_add.append(wanted)
 
-        if not wanted_found:
+        if not found:
            to_add.append(wanted)
 
 
