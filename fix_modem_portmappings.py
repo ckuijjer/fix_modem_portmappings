@@ -2,6 +2,7 @@
 
 import socket
 import collections
+import logging
 import mechanize
 import BeautifulSoup
 
@@ -40,21 +41,21 @@ class PortMappingHandler():
         return mappings
 
     def append(self, mapping):
+        logging.info('adding name: %s ip: %s port: %s' % (mapping.name, mapping.ip, mapping.port))
         url = self.append_url % {
             'name': mapping.name,
             'ip': mapping.ip,
             'port': mapping.port,
         }
         self.browser.open(url)
-        print url
 
     def remove(self, mapping):
+        logging.info('removing name: %s ip: %s port: %s' % (mapping.name, mapping.ip, mapping.port))
         url = self.remove_url % {
             'ip_int': self.ip_to_int(mapping.ip),
             'port': mapping.port,
         }
         self.browser.open(url)
-        print url
 
     def ip_to_int(self, ipaddress):
         return int(socket.inet_pton(socket.AF_INET, ipaddress).encode('hex'), 16)
@@ -64,41 +65,47 @@ def get_ipaddress():
     return socket.gethostbyname(socket.gethostname())
 
 def main():
-    ip = get_ipaddress();
+    logging.basicConfig(filename='/var/log/fix_modem_portmappings', level=logging.DEBUG)
+    try:
+        logging.info('Starting')
 
-    wanted_mappings = [
-        PortMapping(name='ssh', ip=ip, port=22),
-        PortMapping(name='http', ip=ip, port=80),
-        PortMapping(name='https', ip=ip, port=443),
-    ]
+        ip = get_ipaddress();
 
-    handler = PortMappingHandler()
-    existing_mappings = handler.retrieve()
+        wanted_mappings = [
+            PortMapping(name='ssh', ip=ip, port=22),
+            PortMapping(name='http', ip=ip, port=80),
+            PortMapping(name='https', ip=ip, port=443),
+        ]
 
-    to_remove = []
-    to_add = []
+        handler = PortMappingHandler()
+        existing_mappings = handler.retrieve()
 
-    for wanted in wanted_mappings:
-        found = False
+        to_remove = []
+        to_add = []
 
-        for existing in existing_mappings:
-            if wanted.port == existing.port:
-                found = True
+        for wanted in wanted_mappings:
+            found = False
 
-            if wanted.port == existing.port and wanted.ip != existing.ip:
-                to_remove.append(existing)
-                to_add.append(wanted)
+            for existing in existing_mappings:
+                if wanted.port == existing.port:
+                    found = True
 
-        if not found:
-           to_add.append(wanted)
+                if wanted.port == existing.port and wanted.ip != existing.ip:
+                    to_remove.append(existing)
+                    to_add.append(wanted)
 
+            if not found:
+               to_add.append(wanted)
 
-    for mapping in to_remove:
-        handler.remove(mapping)
+        for mapping in to_remove:
+            handler.remove(mapping)
 
-    for mapping in to_add:
-        handler.append(mapping)
+        for mapping in to_add:
+            handler.append(mapping)
 
+        logging.info('Stopping')
+    except Exception as e:
+        logging.critical(e)
 
 if __name__ == '__main__':
     main()
