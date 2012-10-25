@@ -26,7 +26,7 @@ class PortMappingHandler():
 
     def retrieve(self):
         self.browser.open(self.view_url)
-        soup = BeautifulSoup.BeautifulSoup(self.browser.response.read())
+        soup = BeautifulSoup.BeautifulSoup(self.browser.response().read())
 
         # the first table row is a header
         rows = soup.findAll('tr')[1:]
