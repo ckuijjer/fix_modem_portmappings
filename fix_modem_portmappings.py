@@ -91,7 +91,7 @@ def main():
                 to_add.append(wanted)
 
         if not wanted_found:
-            mappings_to_add.append(wanted)
+           to_add.append(wanted)
 
 
     for mapping in to_remove:
